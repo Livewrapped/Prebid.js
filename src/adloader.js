@@ -6,7 +6,7 @@ const _requestCache = {};
 const _approvedLoadExternalJSList = [
   'adloox',
   'criteo',
-  'outstream',
+  'renderer',
   'adagio',
   'browsi'
 ]

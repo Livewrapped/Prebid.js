@@ -44,7 +44,7 @@ describe('Renderer', function () {
     it('sets a render function with setRender method', function () {
       testRenderer1.setRender(spyRenderFn);
       expect(typeof testRenderer1.render).to.equal('function');
-      testRenderer1.render();
+      testRenderer1.render({mediaType: 'video'});
       expect(spyRenderFn.called).to.equal(true);
     });
 
@@ -128,7 +128,7 @@ describe('Renderer', function () {
       });
       testRenderer.setRender(() => {})
 
-      testRenderer.render()
+      testRenderer.render({mediaType: 'video'})
       expect(utilsSpy.callCount).to.equal(1);
     });
 
@@ -147,11 +147,10 @@ describe('Renderer', function () {
         config: { test: 'config1' },
         id: 1,
         adUnitCode: 'video1'
-
       });
       testRenderer.setRender(() => {})
 
-      testRenderer.render()
+      testRenderer.render({mediaType: 'video'})
       expect(loadExternalScript.called).to.be.true;
     });
 
@@ -177,11 +176,35 @@ describe('Renderer', function () {
         config: { test: 'config1' },
         id: 1,
         adUnitCode: 'video1'
-
       });
       testRenderer.setRender(() => {})
 
-      testRenderer.render()
+      testRenderer.render({mediaType: 'video'})
+      expect(loadExternalScript.called).to.be.true;
+    });
+
+    it('should load external script instead of publisher-defined one when mediaType differs', function() {
+      $$PREBID_GLOBAL$$.adUnits = [{
+        code: 'adunit1',
+        mediaTypes: {
+          native: {
+            renderer: {
+              url: 'https://acdn.adnxs.com/video/outstream/ANOutstreamVideo.js',
+              render: sinon.spy()
+            },
+          }
+        }
+      }]
+
+      let testRenderer = Renderer.install({
+        url: 'https://httpbin.org/post',
+        config: { test: 'config1' },
+        id: 1,
+        adUnitCode: 'adunit1'
+      });
+      testRenderer.setRender(() => {})
+
+      testRenderer.render({mediaType: 'video'})
       expect(loadExternalScript.called).to.be.true;
     });
 
@@ -201,7 +224,7 @@ describe('Renderer', function () {
       });
       expect(loadExternalScript.called).to.be.false;
 
-      testRenderer.render()
+      testRenderer.render({mediaType: 'video'})
       expect(loadExternalScript.called).to.be.true;
     });
   });

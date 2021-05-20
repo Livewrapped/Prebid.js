@@ -1,13 +1,13 @@
 import { loadExternalScript } from './adloader.js';
 import * as utils from './utils.js';
 import find from 'core-js-pure/features/array/find.js';
-const moduleCode = 'outstream';
+const moduleCode = 'renderer';
 
 /**
  * @typedef {object} Renderer
  *
  * A Renderer stores some functions which are used to render a particular Bid.
- * These are used in Outstream Video Bids, returned on the Bid by the adapter, and will
+ * These can be used for all mediatypes, returned on the Bid by the adapter, and will
  * be used to render that bid unless the Publisher overrides them.
  */
 
@@ -40,6 +40,7 @@ export function Renderer(options) {
   // use a function, not an arrow, in order to be able to pass "arguments" through
   this.render = function () {
     const renderArgs = arguments
+    const mediaType = arguments[0].mediaType;
     const runRender = () => {
       if (this._render) {
         this._render.apply(this, renderArgs)
@@ -48,10 +49,14 @@ export function Renderer(options) {
       }
     }
 
-    if (!isRendererPreferredFromAdUnit(adUnitCode)) {
+    if (!isRendererPreferredFromAdUnit(adUnitCode, mediaType)) {
       // we expect to load a renderer url once only so cache the request to load script
       this.cmd.unshift(runRender) // should render run first ?
-      loadExternalScript(url, moduleCode, this.callback);
+      if (url.length > 0) {
+        loadExternalScript(url, moduleCode, this.callback);
+      } else {
+        this.callback();
+      }
     } else {
       utils.logWarn(`External Js not loaded by Renderer since renderer url and callback is already defined on adUnit ${adUnitCode}`);
       runRender()
@@ -103,7 +108,7 @@ Renderer.prototype.process = function() {
  * @returns {Boolean}
  */
 export function isRendererRequired(renderer) {
-  return !!(renderer && renderer.url);
+  return !!renderer;
 }
 
 /**
@@ -115,7 +120,7 @@ export function executeRenderer(renderer, bid) {
   renderer.render(bid);
 }
 
-function isRendererPreferredFromAdUnit(adUnitCode) {
+function isRendererPreferredFromAdUnit(adUnitCode, mediaType) {
   const adUnits = $$PREBID_GLOBAL$$.adUnits;
   const adUnit = find(adUnits, adUnit => {
     return adUnit.code === adUnitCode;
@@ -127,11 +132,11 @@ function isRendererPreferredFromAdUnit(adUnitCode) {
 
   // renderer defined at adUnit level
   const adUnitRenderer = utils.deepAccess(adUnit, 'renderer');
-  const hasValidAdUnitRenderer = !!(adUnitRenderer && adUnitRenderer.url && adUnitRenderer.render);
+  const hasValidAdUnitRenderer = !!(adUnitRenderer && adUnitRenderer.render);
 
   // renderer defined at adUnit.mediaTypes level
-  const mediaTypeRenderer = utils.deepAccess(adUnit, 'mediaTypes.video.renderer');
-  const hasValidMediaTypeRenderer = !!(mediaTypeRenderer && mediaTypeRenderer.url && mediaTypeRenderer.render)
+  const mediaTypeRenderer = utils.deepAccess(adUnit, 'mediaTypes.' + mediaType + '.renderer');
+  const hasValidMediaTypeRenderer = !!(mediaTypeRenderer && mediaTypeRenderer.render)
 
   return !!(
     (hasValidAdUnitRenderer && !(adUnitRenderer.backupOnly === true)) ||

@@ -593,11 +593,11 @@ function getFeatures(bidRequest, bidderRequest) {
 function isRendererPreferredFromPublisher(bidRequest) {
   // renderer defined at adUnit level
   const adUnitRenderer = utils.deepAccess(bidRequest, 'renderer');
-  const hasValidAdUnitRenderer = !!(adUnitRenderer && adUnitRenderer.url && adUnitRenderer.render);
+  const hasValidAdUnitRenderer = !!(adUnitRenderer && adUnitRenderer.render);
 
   // renderer defined at adUnit.mediaTypes level
   const mediaTypeRenderer = utils.deepAccess(bidRequest, 'mediaTypes.video.renderer');
-  const hasValidMediaTypeRenderer = !!(mediaTypeRenderer && mediaTypeRenderer.url && mediaTypeRenderer.render);
+  const hasValidMediaTypeRenderer = !!(mediaTypeRenderer && mediaTypeRenderer.render);
 
   return !!(
     (hasValidAdUnitRenderer && !(adUnitRenderer.backupOnly === true)) ||
